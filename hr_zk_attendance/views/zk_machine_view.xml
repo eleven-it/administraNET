@@ -10,6 +10,10 @@
                                 icon="fa-remove " confirm="Are you sure you want to do this?"/>
                     <button name="download_attendance" type="object" string="Download Data" class="oe_highlight"
                             icon="fa-download " confirm="Are you sure you want to do this?" />
+                    <button name="upload_employees" type="object" string="Upload Employees" class="oe_highlight"
+                            icon="fa-upload" confirm="Are you sure you want to upload employees?" />
+                    <button name="download_employees" type="object" string="Download Employees" class="oe_highlight"
+                            icon="fa-download" confirm="Are you sure you want to download employees from the device?" />
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -65,4 +69,3 @@
     <menuitem id="zk_machine_menu" parent="hr_attendance.menu_hr_attendance_root" sequence="50" name="Biometric Manager" />
     <menuitem id="zk_machine_sub_menu" parent="zk_machine_menu"  name="Device Configuration" action="zk_machine_action" sequence="1"/>
 </odoo>
-

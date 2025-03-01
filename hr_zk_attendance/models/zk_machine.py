@@ -1,24 +1,3 @@
-# -*- coding: utf-8 -*-
-###################################################################################
-#
-#    Cybrosys Technologies Pvt. Ltd.
-#    Copyright (C) 2020-TODAY Cybrosys Technologies(<http://www.cybrosys.com>).
-#    Author: cybrosys(<https://www.cybrosys.com>)
-#
-#    This program is free software: you can modify
-#    it under the terms of the GNU Affero General Public License (AGPL) as
-#    published by the Free Software Foundation, either version 3 of the
-#    License, or (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU Affero General Public License for more details.
-#
-#    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-###################################################################################
 import pytz
 import sys
 import datetime
@@ -28,6 +7,7 @@ import binascii
 from . import zklib
 from .zkconst import *
 from struct import unpack
+from contextlib import contextmanager
 from odoo import api, fields, models
 from odoo import _
 from odoo.exceptions import UserError, ValidationError
@@ -58,36 +38,93 @@ class ZkMachine(models.Model):
         try:
             conn = zk.connect()
             return conn
-        except:
+        except Exception as e:
+            _logger.error("Error connecting to device: %s", e)
             return False
+        
     
+    @api.model
+    def _convert_timestamp(self, ts):
+        """Helper para convertir el timestamp del dispositivo a string en UTC."""
+        # Asumimos que ts es un objeto datetime del dispositivo
+        atten_time = datetime.strptime(ts.strftime('%Y-%m-%d %H:%M:%S'), '%Y-%m-%d %H:%M:%S')
+        local_tz = pytz.timezone(self.env.user.partner_id.tz or 'GMT')
+        local_dt = local_tz.localize(atten_time, is_dst=None)
+        utc_dt = local_dt.astimezone(pytz.utc)
+        utc_str = utc_dt.strftime("%Y-%m-%d %H:%M:%S")
+        # Convertir de nuevo a objeto datetime y a string con formato Odoo
+        final_dt = datetime.strptime(utc_str, "%Y-%m-%d %H:%M:%S")
+        return fields.Datetime.to_string(final_dt)
+
+    @contextmanager
+    def open_connection(self, zk):
+        """Context manager para manejar la conexión al dispositivo."""
+        conn = self.device_connect(zk)
+        try:
+            yield conn
+        finally:
+            if conn:
+                conn.disconnect()
+
     def clear_attendance(self):
         for info in self:
             try:
                 machine_ip = info.name
                 zk_port = info.port_no
-                timeout = 30
+                timeout = 10
                 try:
                     zk = ZK(machine_ip, port=zk_port, timeout=timeout, password=0, force_udp=False, ommit_ping=False)
                 except NameError:
                     raise UserError(_("Please install it with 'pip3 install pyzk'."))
+
+                # Intentamos establecer conexión con el dispositivo
                 conn = self.device_connect(zk)
-                if conn:
-                    conn.enable_device()
-                    clear_data = zk.get_attendance()
-                    if clear_data:
-                        # conn.clear_attendance()
-                        self._cr.execute("""delete from zk_machine_attendance""")
-                        conn.disconnect()
-                        raise UserError(_('Attendance Records Deleted.'))
-                    else:
-                        raise UserError(_('Unable to clear Attendance log. Are you sure attendance log is not empty.'))
-                else:
-                    raise UserError(
-                        _('Unable to connect to Attendance Device. Please use Test Connection button to verify.'))
-            except:
-                raise ValidationError(
-                    'Unable to clear Attendance log. Are you sure attendance device is connected & record is not empty.')
+                if not conn:
+                    raise UserError(_('Unable to connect to Attendance Device. Please use Test Connection button to verify.'))
+
+                conn.enable_device()
+
+                # Obtenemos el log de asistencias usando la conexión activa
+                attendance_log = conn.get_attendance()
+
+                if not attendance_log:
+                    conn.disconnect()
+                    # Devuelve una notificación informando que no se encontraron registros
+                    return {
+                        'type': 'ir.actions.client',
+                        'tag': 'display_notification',
+                        'params': {
+                            'title': _('Clear Attendance'),
+                            'message': _('No attendance records found on the device.'),
+                            'sticky': False,
+                        },
+                    }
+                
+                # Si existen registros, intentamos limpiar el log en el dispositivo
+                try:
+                    conn.clear_attendance()
+                except Exception as e:
+                    _logger.error("Error while clearing attendance on device: %s", e)
+                    raise UserError(_('Error while clearing attendance on device: %s') % e)
+                
+                # Borramos los registros en la base de datos local y obtenemos la cantidad eliminada
+                self._cr.execute("""DELETE FROM zk_machine_attendance""")
+                count_deleted = self._cr.rowcount
+                conn.disconnect()
+                
+                # Devuelve una notificación con la cantidad de registros eliminados
+                return {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': _('Clear Attendance'),
+                        'message': _('%d attendance records were deleted.') % count_deleted,
+                        'sticky': False,
+                    },
+                }
+            except Exception as e:
+                _logger.error("Error in clear_attendance: %s", e)
+                raise ValidationError(_('Unable to clear Attendance log. Please check the connection to the device and that it has records.'))
 
     def getSizeUser(self, zk):
         """Checks a returned packet to see if it returned CMD_PREPARE_DATA,
@@ -116,93 +153,221 @@ class ZkMachine(models.Model):
         machines = self.env['zk.machine'].search([])
         for machine in machines :
             machine.download_attendance()
-        
+            
     def download_attendance(self):
-        _logger.info("++++++++++++Cron Executed++++++++++++++++++++++")
-        zk_attendance = self.env['zk.machine.attendance']
-        att_obj = self.env['hr.attendance']
-        for info in self:
-            machine_ip = info.name
-            zk_port = info.port_no
-            timeout = 15
-            try:
-                zk = ZK(machine_ip, port=zk_port, timeout=timeout, password=0, force_udp=False, ommit_ping=False)
-            except NameError:
-                raise UserError(_("Pyzk module not Found. Please install it with 'pip3 install pyzk'."))
-            conn = self.device_connect(zk)
-            if conn:
-                # conn.disable_device() #Device Cannot be used during this time.
-                try:
-                    user = conn.get_users()
-                except:
-                    user = False
-                try:
-                    attendance = conn.get_attendance()
-                except:
-                    attendance = False
-                if attendance:
-                    for each in attendance:
-                        atten_time = each.timestamp
-                        atten_time = datetime.strptime(atten_time.strftime('%Y-%m-%d %H:%M:%S'), '%Y-%m-%d %H:%M:%S')
-                        local_tz = pytz.timezone(
-                            self.env.user.partner_id.tz or 'GMT')
-                        local_dt = local_tz.localize(atten_time, is_dst=None)
-                        utc_dt = local_dt.astimezone(pytz.utc)
-                        utc_dt = utc_dt.strftime("%Y-%m-%d %H:%M:%S")
-                        atten_time = datetime.strptime(
-                            utc_dt, "%Y-%m-%d %H:%M:%S")
-                        atten_time = fields.Datetime.to_string(atten_time)
-                        if user:
-                            for uid in user:
-                                if uid.user_id == each.user_id:
-                                    get_user_id = self.env['hr.employee'].search(
-                                        [('device_id', '=', each.user_id)])
-                                    if get_user_id:
-                                        duplicate_atten_ids = zk_attendance.search(
-                                            [('device_id', '=', each.user_id), ('punching_time', '=', atten_time)])
-                                        if duplicate_atten_ids:
-                                            continue
-                                        else:
-                                            zk_attendance.create({'employee_id': get_user_id.id,
-                                                                  'device_id': each.user_id,
-                                                                  'attendance_type': str(each.status),
-                                                                  'punch_type': str(each.punch),
-                                                                  'punching_time': atten_time,
-                                                                  'address_id': info.address_id.id})
-                                            att_var = att_obj.search([('employee_id', '=', get_user_id.id),
-                                                                      ('check_out', '=', False)])
-                                            print('ddfcd', str(each.status))
-                                            if each.punch == 0: #check-in
-                                                if not att_var:
-                                                    att_obj.create({'employee_id': get_user_id.id,
-                                                                    'check_in': atten_time})
-                                            if each.punch == 1: #check-out
-                                                if len(att_var) == 1:
-                                                    att_var.write({'check_out': atten_time})
-                                                else:
-                                                    att_var1 = att_obj.search([('employee_id', '=', get_user_id.id)])
-                                                    if att_var1:
-                                                        att_var1[-1].write({'check_out': atten_time})
+        _logger.info("++++++++++++Download Attendance Cron Executed++++++++++++++++++++++")
+        zk_attendance_model = self.env['zk.machine.attendance']
+        hr_attendance_model = self.env['hr.attendance']
+        count_downloaded = 0
 
-                                    else:
-                                        print('ddfcd', str(each.status))
-                                        print('user', uid.name)
-                                        employee = self.env['hr.employee'].create(
-                                            {'device_id': each.user_id, 'name': uid.name})
-                                        zk_attendance.create({'employee_id': employee.id,
-                                                              'device_id': each.user_id,
-                                                              'attendance_type': str(each.status),
-                                                              'punch_type': str(each.punch),
-                                                              'punching_time': atten_time,
-                                                              'address_id': info.address_id.id})
-                                        att_obj.create({'employee_id': employee.id,
-                                                        'check_in': atten_time})
-                                else:
-                                    pass
-                    # zk.enableDevice()
-                    conn.disconnect
-                    return True
-                else:
-                    raise UserError(_('Unable to get the attendance log, please try again later.'))
-            else:
+        self.ensure_one()
+        try:
+            zk = ZK(self.name, port=self.port_no, timeout=15, password=0, force_udp=False, ommit_ping=False)
+        except NameError:
+            raise UserError(_("Pyzk module not found. Please install it with 'pip3 install pyzk'."))
+
+        with self.open_connection(zk) as conn:
+            if not conn:
                 raise UserError(_('Unable to connect, please check the parameters and network connections.'))
+
+            try:
+                users = conn.get_users()
+            except Exception as e:
+                _logger.warning("Error getting users: %s", e)
+                users = None
+
+            try:
+                attendance_records = conn.get_attendance()
+            except Exception as e:
+                _logger.warning("Error getting attendance records: %s", e)
+                attendance_records = None
+
+            if not attendance_records:
+                return {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': _('Download Attendance'),
+                        'message': _('No attendance records found on the device.'),
+                        'sticky': False,
+                    },
+                }
+
+            # Pre-cargar empleados existentes en un diccionario (clave: device_id)
+            employee_records = self.env['hr.employee'].search([('device_id', '!=', False)])
+            employee_dict = {str(emp.device_id): emp for emp in employee_records}
+
+            # Pre-cargar usuarios del dispositivo (clave: device_id) para obtener información al crear nuevos empleados
+            user_dict = {}
+            if users:
+                for user in users:
+                    user_dict[str(user.user_id)] = user
+
+            for rec in attendance_records:
+                # Convertir el timestamp del registro usando el helper
+                atten_time = self._convert_timestamp(rec.timestamp)
+                device_uid = str(rec.user_id)
+
+                # Buscar empleado existente por device_id
+                emp = employee_dict.get(device_uid)
+                if not emp:
+                    # Si no existe, y tenemos información del usuario, crearlo
+                    if device_uid in user_dict:
+                        user_info = user_dict[device_uid]
+                        emp = self.env['hr.employee'].create({
+                            'device_id': device_uid,
+                            'name': user_info.name or "Employee " + device_uid,
+                        })
+                        employee_dict[device_uid] = emp
+                    else:
+                        # Si tampoco hay información de usuario, saltar este registro
+                        continue
+
+                # Evitar duplicados: verificar si ya existe un registro para este dispositivo y hora
+                duplicate = zk_attendance_model.search([
+                    ('device_id', '=', device_uid),
+                    ('punching_time', '=', atten_time)
+                ], limit=1)
+                if duplicate:
+                    continue
+
+                zk_attendance_model.create({
+                    'employee_id': emp.id,
+                    'device_id': device_uid,
+                    'attendance_type': str(rec.status),
+                    'punch_type': str(rec.punch),
+                    'punching_time': atten_time,
+                    'address_id': self.address_id.id,
+                })
+                count_downloaded += 1
+
+                # Actualizar el registro en hr.attendance:
+                # Si punch == 0 (check-in) y no existe un registro abierto, crear uno.
+                # Si punch == 1 (check-out) y existe un registro abierto, actualizarlo.
+                att_var = hr_attendance_model.search([
+                    ('employee_id', '=', emp.id),
+                    ('check_out', '=', False)
+                ], limit=1)
+                if rec.punch == 0:  # check-in
+                    if not att_var:
+                        hr_attendance_model.create({
+                            'employee_id': emp.id,
+                            'check_in': atten_time,
+                        })
+                elif rec.punch == 1:  # check-out
+                    if att_var:
+                        att_var.write({'check_out': atten_time})
+            # Fin de la iteración sobre registros
+
+        _logger.info("++++++++++++Download Attendance Cron Finished. %d records processed.++++++++++++++++++++++", count_downloaded)
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Download Attendance'),
+                'message': _('%d attendance records were downloaded.') % count_downloaded,
+                'sticky': False,
+            },
+        }
+
+
+    def upload_employees(self):
+        """
+        Sube o actualiza empleados en el dispositivo usando el campo device_id.
+        Se registra el inicio y fin del proceso y se retorna una notificación con el total procesado.
+        """
+        self.ensure_one()
+        _logger.info("++++++++++++Upload Employees Cron Executed++++++++++++++++++++++")
+        count_uploaded = 0
+
+        try:
+            zk = ZK(self.name, port=self.port_no, timeout=30, password=0, force_udp=False, ommit_ping=False)
+        except NameError:
+            raise UserError(_("Pyzk module not found. Please install it with 'pip3 install pyzk'."))
+
+        with self.open_connection(zk) as conn:
+            if not conn:
+                raise UserError(_("Could not connect to the device."))
+            # Filtrar solo empleados que tengan definido un device_id
+            employees = self.env["hr.employee"].search([('device_id', '!=', False)])
+            for emp in employees:
+                try:
+                    uid = int(emp.device_id)
+                except ValueError:
+                    _logger.warning("Employee %s has a non-integer device_id: %s. Skipping.", emp.name, emp.device_id)
+                    continue
+
+                conn.set_user(uid=uid, name=emp.name, privilege=const.USER_DEFAULT, password="")
+                _logger.info("Employee %s with device_id %s uploaded/updated in device %s", emp.name, uid, self.name)
+                count_uploaded += 1
+
+        _logger.info("++++++++++++Upload Employees Cron Finished. %d employees processed.++++++++++++++++++++++", count_uploaded)
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Upload Employees'),
+                'message': _('%d employees were uploaded/updated.') % count_uploaded,
+                'sticky': False,
+            }
+        }
+
+    def download_employees(self):
+        """
+        Descarga los usuarios registrados en el dispositivo y sincroniza empleados en Odoo
+        utilizando el campo device_id para evitar duplicados.
+        Se registra el inicio y fin del proceso y se retorna una notificación con el total descargado.
+        """
+        self.ensure_one()
+        _logger.info("++++++++++++Download Employees Cron Executed++++++++++++++++++++++")
+        count_downloaded = 0
+
+        try:
+            zk = ZK(self.name, port=self.port_no, timeout=30, password=0, force_udp=False, ommit_ping=False)
+        except NameError:
+            raise UserError(_("Pyzk module not found. Please install it with 'pip3 install pyzk'."))
+
+        with self.open_connection(zk) as conn:
+            if not conn:
+                raise UserError(_("Could not connect to the device."))
+
+            users = conn.get_users()
+            if not users:
+                _logger.info("No employees found on device.")
+                return {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': _('Download Employees'),
+                        'message': _('No employees found on the device.'),
+                        'sticky': False,
+                    },
+                }
+
+            # Pre-cargar empleados existentes en Odoo en un diccionario (clave: device_id)
+            employee_records = self.env["hr.employee"].search([('device_id', '!=', False)])
+            emp_dict = {str(emp.device_id): emp for emp in employee_records}
+
+            for user in users:
+                device_uid = str(user.uid)
+                if device_uid in emp_dict:
+                    _logger.info("Employee %s (device_id: %s) already exists in Odoo. Skipping.", user.name, device_uid)
+                    continue
+
+                new_employee = self.env["hr.employee"].create({
+                    "name": user.name or "Employee " + device_uid,
+                    "device_id": device_uid,
+                })
+                _logger.info("Employee %s (device_id: %s) added to Odoo.", user.name, device_uid)
+                count_downloaded += 1
+
+        _logger.info("++++++++++++Download Employees Cron Finished. %d employees processed.++++++++++++++++++++++", count_downloaded)
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Download Employees'),
+                'message': _('%d employees were downloaded.') % count_downloaded,
+                'sticky': False,
+            }
+        }
