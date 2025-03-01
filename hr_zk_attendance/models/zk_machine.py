@@ -73,7 +73,7 @@ class ZkMachine(models.Model):
                 zk_port = info.port_no
                 timeout = 10
                 try:
-                    zk = ZK(machine_ip, port=zk_port, timeout=timeout, password=0, force_udp=False, ommit_ping=False)
+                    zk = ZK(machine_ip, port=zk_port, timeout=timeout, password=0, force_udp=False, ommit_ping=True)
                 except NameError:
                     raise UserError(_("Please install it with 'pip3 install pyzk'."))
 
@@ -162,7 +162,7 @@ class ZkMachine(models.Model):
 
         self.ensure_one()
         try:
-            zk = ZK(self.name, port=self.port_no, timeout=15, password=0, force_udp=False, ommit_ping=False)
+            zk = ZK(self.name, port=self.port_no, timeout=15, password=0, force_udp=False, ommit_ping=True)
         except NameError:
             raise UserError(_("Pyzk module not found. Please install it with 'pip3 install pyzk'."))
 
@@ -281,7 +281,7 @@ class ZkMachine(models.Model):
         count_uploaded = 0
 
         try:
-            zk = ZK(self.name, port=self.port_no, timeout=30, password=0, force_udp=False, ommit_ping=False)
+            zk = ZK(self.name, port=self.port_no, timeout=30, password=0, force_udp=False, ommit_ping=True)
         except NameError:
             raise UserError(_("Pyzk module not found. Please install it with 'pip3 install pyzk'."))
 
@@ -323,7 +323,7 @@ class ZkMachine(models.Model):
         count_downloaded = 0
 
         try:
-            zk = ZK(self.name, port=self.port_no, timeout=30, password=0, force_udp=False, ommit_ping=False)
+            zk = ZK(self.name, port=self.port_no, timeout=30, password=0, force_udp=False, ommit_ping=True)
         except NameError:
             raise UserError(_("Pyzk module not found. Please install it with 'pip3 install pyzk'."))
 
