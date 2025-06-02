@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_hr_attendance_incomplete_tree" model="ir.ui.view">
+        <field name="name">hr.attendance.incomplete.tree</field>
+        <field name="model">hr.attendance</field>
+        <field name="arch" type="xml">
+            <tree string="Fichadas Incompletas" create="false">
+                <field name="employee_id"/>
+                <field name="check_in"/>
+                <field name="check_out"/>
+                <field name="address_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_attendance_incomplete_tree" model="ir.actions.act_window">
+        <field name="name">Fichadas Incompletas</field>
+        <field name="res_model">hr.attendance</field>
+        <field name="view_mode">tree</field>
+        <field name="domain">[('check_out','=',False)]</field>
+    </record>
+
+    <menuitem id="menu_attendance_incomplete_tree"
+              name="Fichadas Incompletas"
+              parent="hr_zk_attendance.zk_machine_menu"
+              sequence="99"
+              action="action_attendance_incomplete_tree"
+              groups="hr_attendance.group_hr_attendance_user"/>
+</odoo>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_hr_attendance_tree_address" model="ir.ui.view">
+        <field name="name">hr.attendance.tree.address</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="hr_attendance.view_attendance_tree"/>
+        <field name="arch" type="xml">
+            <field name="check_in" position="after">
+                <field name="address_id"/>
+            </field>
+        </field>
+    </record>
+</odoo>

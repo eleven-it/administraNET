@@ -1,0 +1,16 @@
+# Translation for hr_zk_attendance_fu
+msgid ""
+msgstr ""
+"Project-Id-Version: hr_zk_attendance_fu\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-06-02 00:00+0000\n"
+"PO-Revision-Date: 2025-06-02 00:00+0000\n"
+"Language: es_AR\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. module: hr_zk_attendance_fu
+#: model:ir.model.fields,field_description:hr.attendance,address_id
+msgid "Work Location"
+msgstr "Ubicación del reloj"
