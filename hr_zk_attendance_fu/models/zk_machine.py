@@ -23,6 +23,7 @@ def download_attendance(self):
     hr_attendance_model = self.env['hr.attendance']
     count_downloaded = 0
     skipped_invalid_types = {}
+    skipped_invalid_checkouts = []
 
     from zk import ZK
     zk = ZK(self.name, port=self.port_no, timeout=15, password=0, force_udp=False, ommit_ping=True)
@@ -95,31 +96,52 @@ def download_attendance(self):
                 ], order='check_in desc', limit=1)
 
                 if open_att:
-                    if time > open_att.check_in:
-                        open_att.write({'check_out': time, 'zk_machine_id': self.id})
+                    open_att.flush()
+                    if open_att.check_in and time > open_att.check_in:
+                        try:
+                            open_att.write({
+                                'check_out': time,
+                                'zk_machine_id': self.id,
+                            })
+                        except Exception as e:
+                            _logger.error(
+                                f"❌ Error al registrar salida para {emp.name} (ID {emp.id}) "
+                                f"en {self.address_id.display_name}. Entrada: {open_att.check_in}, "
+                                f"Salida: {time}. Error: {str(e)}"
+                            )
                     else:
+                        skipped_invalid_checkouts.append(f"{emp.name} ({uid})")
                         _logger.warning(
-                            f"Check-out inválido ignorado para {emp.name} (ID {emp.id}) "
-                            f"en {self.address_id.display_name}: "
-                            f"Salida: {time} anterior a Entrada: {open_att.check_in}"
+                            f"⚠️ Check-out inválido ignorado para {emp.name} (ID {emp.id}) "
+                            f"en {self.address_id.display_name}. Salida: {time} anterior a entrada: {open_att.check_in}"
                         )
 
             count_downloaded += 1
 
-    if skipped_invalid_types:
-        _logger.warning("Registros omitidos por attendance_type no soportado:")
-        for t, n in skipped_invalid_types.items():
-            _logger.warning(f"  Tipo: {t} - Ocurrencias: {n}")
+    # Armado del mensaje visual
+    msg = _('%d registros descargados.') % count_downloaded
 
-    _logger.info("++++++++++++Download Attendance Finalizado. %d registros procesados.++++++++++++++++++++++", count_downloaded)
+    if skipped_invalid_types:
+        msg += '<br/><b>Tipos inválidos ignorados:</b><ul>'
+        for t, n in skipped_invalid_types.items():
+            msg += f"<li>Tipo {t}: {n} registros</li>"
+        msg += "</ul>"
+
+    if skipped_invalid_checkouts:
+        msg += '<b>Salidas inválidas (no se registraron):</b><ul>'
+        for name in skipped_invalid_checkouts:
+            msg += f"<li>{name}</li>"
+        msg += "</ul>"
+
+    _logger.info("✔️ Download Attendance Finalizado. %d registros procesados.", count_downloaded)
 
     return {
         'type': 'ir.actions.client',
         'tag': 'display_notification',
         'params': {
             'title': _('Download Attendance'),
-            'message': _('%d registros descargados. %d ignorados por tipo inválido.') % (
-                count_downloaded, sum(skipped_invalid_types.values())),
+            'message': msg,
             'sticky': False,
+            'type': 'warning' if skipped_invalid_types or skipped_invalid_checkouts else 'success',
         },
     }
