@@ -27,7 +27,7 @@ def download_attendance(self):
     from zk import ZK
     zk = ZK(self.name, port=self.port_no, timeout=15, password=0, force_udp=False, ommit_ping=True)
 
-    valid_attendance_types = ['1', '2', '3', '4', '15']  # valores válidos según el campo Selection
+    valid_attendance_types = ['1', '2', '3', '4', '15']
 
     with self.open_connection(zk) as conn:
         if not conn:
@@ -84,32 +84,42 @@ def download_attendance(self):
                         'employee_id': emp.id,
                         'check_in': time,
                         'address_id': self.address_id.id,
+                        'zk_machine_id': self.id,
                     })
+
             elif rec.punch == 1:  # check-out
                 open_att = hr_attendance_model.search([
                     ('employee_id', '=', emp.id),
                     ('check_out', '=', False),
                     ('address_id', '=', self.address_id.id)
                 ], order='check_in desc', limit=1)
+
                 if open_att:
-                    open_att.write({'check_out': time})
+                    if time > open_att.check_in:
+                        open_att.write({'check_out': time, 'zk_machine_id': self.id})
+                    else:
+                        _logger.warning(
+                            f"Check-out inválido ignorado para {emp.name} (ID {emp.id}) "
+                            f"en {self.address_id.display_name}: "
+                            f"Salida: {time} anterior a Entrada: {open_att.check_in}"
+                        )
 
             count_downloaded += 1
 
-    # Log de tipos inválidos omitidos
     if skipped_invalid_types:
-        _logger.warning("Registros omitidos por tipos de asistencia inválidos:")
-        for key, val in skipped_invalid_types.items():
-            _logger.warning(f"  Tipo: {key} - Cantidad: {val}")
+        _logger.warning("Registros omitidos por attendance_type no soportado:")
+        for t, n in skipped_invalid_types.items():
+            _logger.warning(f"  Tipo: {t} - Ocurrencias: {n}")
 
-    _logger.info("++++++++++++Download Attendance Finalizado. %d registros descargados.++++++++++++++++++++++", count_downloaded)
+    _logger.info("++++++++++++Download Attendance Finalizado. %d registros procesados.++++++++++++++++++++++", count_downloaded)
+
     return {
         'type': 'ir.actions.client',
         'tag': 'display_notification',
         'params': {
             'title': _('Download Attendance'),
-            'message': _('%d attendance records downloaded. %d invalid types skipped.') %
-                       (count_downloaded, sum(skipped_invalid_types.values())),
+            'message': _('%d registros descargados. %d ignorados por tipo inválido.') % (
+                count_downloaded, sum(skipped_invalid_types.values())),
             'sticky': False,
         },
     }
