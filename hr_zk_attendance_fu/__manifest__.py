@@ -1,6 +1,6 @@
 {
     'name': 'ZK Attendance Funcionalidad Extendida',
-    'version': '15.0.1.0.2',
+    'version': '15.0.1.0.3',
     'category': 'Human Resources',
     'summary': 'Extiende el control de asistencia biométrica por edificio',
     'author': 'Sebastián Paredes',
