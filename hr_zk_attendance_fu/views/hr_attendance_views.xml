@@ -7,6 +7,7 @@
         <field name="arch" type="xml">
             <field name="check_in" position="after">
                 <field name="address_id"/>
+                <field name="zk_machine_id"/>
             </field>
         </field>
     </record>
