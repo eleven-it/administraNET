@@ -96,6 +96,7 @@ def download_attendance(self):
                 ], order='check_in desc', limit=1)
 
                 if open_att:
+                    open_att.ensure_one()
                     open_att.flush()
                     if open_att.check_in and time > open_att.check_in:
                         try:
@@ -118,7 +119,7 @@ def download_attendance(self):
 
             count_downloaded += 1
 
-    # Armado del mensaje visual
+    # Mensaje resumen visual
     msg = _('%d registros descargados.') % count_downloaded
 
     if skipped_invalid_types:
