@@ -1,0 +1,13 @@
+<!-- hr_zk_attendance_fu/views/zk_machine_inherit_views.xml -->
+<odoo>
+    <record id="zk_machine_form_inherit_fu" model="ir.ui.view">
+        <field name="name">zk.machine.form.inherit.fu</field>
+        <field name="model">zk.machine</field>
+        <field name="inherit_id" ref="hr_zk_attendance.zk_machine_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='download_attendance']" position="attributes">
+                <attribute name="name">action_download_attendance</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

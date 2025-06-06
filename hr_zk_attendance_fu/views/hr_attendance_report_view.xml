@@ -1,0 +1,16 @@
+<odoo>
+    <record id="action_report_attendance_hours_by_employee" model="ir.actions.act_window">
+        <field name="name">Reporte de Horas por Empleado</field>
+        <field name="res_model">hr.attendance</field>
+        <field name="view_mode">tree</field>
+        <field name="domain">[]</field>
+        <field name="context">{}</field>
+    </record>
+
+    <menuitem
+        id="menu_hr_attendance_report_hours"
+        name="Horas por Empleado"
+        parent="hr_attendance.menu_hr_attendance_root"
+        action="action_report_attendance_hours_by_employee"
+    />
+</odoo>

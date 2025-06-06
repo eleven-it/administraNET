@@ -1,0 +1,6 @@
+<odoo>
+    <record id="model_hr_attendance" model="ir.model">
+        <field name="name">Attendance</field>
+        <field name="model">hr.attendance</field>
+    </record>
+</odoo>

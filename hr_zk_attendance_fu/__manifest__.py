@@ -1,15 +1,17 @@
 {
-    'name': 'ZK Attendance Funcionalidad Extendida',
-    'version': '15.0.1.0.4',
-    'category': 'Human Resources',
-    'summary': 'Extiende el control de asistencia biométrica por edificio',
-    'author': 'Sebastián Paredes',
-    'depends': ['hr_zk_attendance', 'hr_attendance'],
-    'data': [
-        'views/hr_attendance_views.xml',
-        'views/hr_attendance_incomplete_views.xml'
+    "name": "HR ZK Attendance FU",
+    "version": "15.0.1.0.5",
+    "depends": ["hr_attendance"],
+    "author": "Sebastián Paredes",
+    "category": "Human Resources",
+    "description": "Extensión del módulo de asistencias para permitir múltiples fichadas por día y cálculo por edificio.",
+    "data": [
+        "security/ir.model.access.csv",
+        "views/hr_attendance_views.xml",
+        "views/hr_attendance_report_view.xml",
+        "data/ir_cron_inherit.xml",
+        "data/ir_model_data.xml"      
     ],
-    'installable': True,
-    'application': False,
-    'license': 'AGPL-3',
+    "installable": True,
+    "auto_install": False
 }
