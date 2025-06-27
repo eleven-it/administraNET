@@ -1,0 +1,3 @@
+<odoo>
+    <menuitem id="menu_hr_attendance_inconsistency_root" name="Attendance Inconsistencies" parent="hr_zk_attendance.zk_machine_menu" sequence="30" action="action_hr_attendance_inconsistency"/>
+</odoo> 

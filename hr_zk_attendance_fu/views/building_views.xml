@@ -1,0 +1,43 @@
+<odoo>
+    <!-- Acción primero -->
+    <record id="action_hr_zk_building" model="ir.actions.act_window">
+        <field name="name">Buildings</field>
+        <field name="res_model">hr.zk.building</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p>Manage the buildings where biometric devices are located.</p>
+        </field>
+    </record>
+
+    <record id="view_hr_zk_building_form" model="ir.ui.view">
+        <field name="name">hr.zk.building.form</field>
+        <field name="model">hr.zk.building</field>
+        <field name="arch" type="xml">
+            <form string="Building">
+                <sheet>
+                    <group>
+                        <field name="code"/>
+                        <field name="name"/>
+                        <field name="street"/>
+                        <field name="responsible_id"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_hr_zk_building_tree" model="ir.ui.view">
+        <field name="name">hr.zk.building.tree</field>
+        <field name="model">hr.zk.building</field>
+        <field name="arch" type="xml">
+            <tree string="Buildings">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="street"/>
+                <field name="responsible_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <menuitem id="menu_hr_zk_building" name="Buildings" parent="hr_zk_attendance.zk_machine_menu" action="action_hr_zk_building" sequence="20"/>
+</odoo> 
