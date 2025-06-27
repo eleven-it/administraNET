@@ -31,7 +31,7 @@ class ZkMachine(models.Model):
     
     name = fields.Char(string='Machine IP', required=True)
     port_no = fields.Integer(string='Port No', required=True)
-    address_id = fields.Many2one('res.partner', string='Working Address')
+    address_id = fields.Many2one('res.partner', string='Working Address', required=False, readonly=True)
     company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.user.company_id.id)
 
     def device_connect(self, zk):
@@ -241,6 +241,19 @@ class ZkMachine(models.Model):
                 })
                 count_downloaded += 1
 
+                # Validar antes de crear/actualizar en hr.attendance
+                # Si es check-out y la hora es inválida, solo crear inconsistencia y continuar
+                if rec.punch == 1 and hasattr(rec, 'check_out') and hasattr(rec, 'check_in') and rec.check_out and rec.check_in and rec.check_out < rec.check_in:
+                    self.env['hr.attendance.inconsistency'].create({
+                        'employee_id': emp.id,
+                        'check_in': rec.check_in.replace(tzinfo=None) if rec.check_in and rec.check_in.tzinfo else rec.check_in,
+                        'check_out': rec.check_out.replace(tzinfo=None) if rec.check_out and rec.check_out.tzinfo else rec.check_out,
+                        'motivo': _('Check-out time is earlier than check-in time.'),
+                        'machine_id': self.id,
+                        'building_id': getattr(self, 'building_id', False) and self.building_id.id or False,
+                    })
+                    continue
+
                 # Actualizar el registro en hr.attendance:
                 # Si punch == 0 (check-in) y no existe un registro abierto, crear uno.
                 # Si punch == 1 (check-out) y existe un registro abierto, actualizarlo.
@@ -249,14 +262,61 @@ class ZkMachine(models.Model):
                     ('check_out', '=', False)
                 ], limit=1)
                 if rec.punch == 0:  # check-in
-                    if not att_var:
-                        hr_attendance_model.create({
+                    check_in_val = datetime.strptime(atten_time, '%Y-%m-%d %H:%M:%S')
+                    # Buscar registro abierto (sin check-out) en el mismo edificio
+                    open_attendance = hr_attendance_model.search([
+                        ('employee_id', '=', emp.id),
+                        ('check_out', '=', False),
+                        ('building_id', '=', getattr(self, 'building_id', False) and self.building_id.id or False)
+                    ], order='check_in desc', limit=1)
+                    if open_attendance:
+                        self.env['hr.attendance.inconsistency'].create({
                             'employee_id': emp.id,
-                            'check_in': atten_time,
+                            'check_in': check_in_val,
+                            'motivo': _('Attempted check-in with previous open attendance in the same building.'),
+                            'machine_id': self.id,
+                            'building_id': getattr(self, 'building_id', False) and self.building_id.id or False,
                         })
+                        continue
+                    # Buscar registros solapados en el mismo edificio
+                    overlapping_attendance = hr_attendance_model.search([
+                        ('employee_id', '=', emp.id),
+                        ('building_id', '=', getattr(self, 'building_id', False) and self.building_id.id or False),
+                        '|',
+                        ('check_out', '=', False),
+                        ('check_out', '>', check_in_val),
+                        ('check_in', '<=', check_in_val),
+                    ], limit=1)
+                    if overlapping_attendance:
+                        self.env['hr.attendance.inconsistency'].create({
+                            'employee_id': emp.id,
+                            'check_in': check_in_val,
+                            'motivo': _('Attempted check-in overlapping with another attendance in the same building.'),
+                            'machine_id': self.id,
+                            'building_id': getattr(self, 'building_id', False) and self.building_id.id or False,
+                        })
+                        continue
+                    hr_attendance_model.create({
+                        'employee_id': emp.id,
+                        'check_in': check_in_val,
+                        'building_id': getattr(self, 'building_id', False) and self.building_id.id or False,
+                    })
                 elif rec.punch == 1:  # check-out
                     if att_var:
-                        att_var.write({'check_out': atten_time})
+                        # Validar que la hora de salida no sea menor que la de entrada
+                        check_in_val = att_var.check_in
+                        check_out_val = datetime.strptime(atten_time, '%Y-%m-%d %H:%M:%S')
+                        if check_out_val < check_in_val:
+                            self.env['hr.attendance.inconsistency'].create({
+                                'employee_id': emp.id,
+                                'check_in': check_in_val,
+                                'check_out': check_out_val,
+                                'motivo': _('Check-out time is earlier than check-in time.'),
+                                'machine_id': self.id,
+                                'building_id': getattr(self, 'building_id', False) and self.building_id.id or False,
+                            })
+                            continue
+                        att_var.write({'check_out': check_out_val})
             # Fin de la iteración sobre registros
 
         _logger.info("++++++++++++Download Attendance Cron Finished. %d records processed.++++++++++++++++++++++", count_downloaded)

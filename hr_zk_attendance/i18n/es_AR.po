@@ -415,3 +415,7 @@ msgstr "zk.machine.attendance"
 #: model:ir.model,name:hr_zk_attendance.model_zk_report_daily_attendance
 msgid "zk.report.daily.attendance"
 msgstr "zk.report.daily.attendance"
+
+#. module: hr_zk_attendance_fu
+msgid "Inconsistencies"
+msgstr "Inconsistencias"
