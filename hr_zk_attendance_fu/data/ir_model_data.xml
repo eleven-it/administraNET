@@ -3,4 +3,14 @@
         <field name="name">Attendance</field>
         <field name="model">hr.attendance</field>
     </record>
+    
+    <record id="model_hr_zk_building" model="ir.model">
+        <field name="name">ZK Building</field>
+        <field name="model">hr.zk.building</field>
+    </record>
+    
+    <record id="model_hr_attendance_inconsistency" model="ir.model">
+        <field name="name">Attendance Inconsistency</field>
+        <field name="model">hr.attendance.inconsistency</field>
+    </record>
 </odoo>

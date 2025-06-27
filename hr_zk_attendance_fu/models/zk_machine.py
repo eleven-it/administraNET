@@ -9,6 +9,8 @@ _logger = logging.getLogger(__name__)
 class ZkMachine(models.Model):
     _inherit = 'zk.machine'
 
+    building_id = fields.Many2one('hr.zk.building', string='Edificio', required=False)
+
     def _convert_timestamp(self, ts):
         atten_time = datetime.strptime(ts.strftime('%Y-%m-%d %H:%M:%S'), '%Y-%m-%d %H:%M:%S')
         local_tz = pytz.timezone(self.env.user.partner_id.tz or 'GMT')

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from datetime import datetime
 import pytz
 import logging
@@ -17,6 +17,50 @@ class HrAttendance(models.Model):
     _inherit = 'hr.attendance'
 
     building_id = fields.Many2one("hr.zk.building", string="Building", required=False)
+
+    attendance_inconsistency_count = fields.Integer(
+        string="Inconsistencias",
+        compute="_compute_inconsistency_count"
+    )
+
+    @api.constrains('check_in', 'check_out', 'employee_id', 'building_id')
+    def _check_validity(self):
+        for attendance in self:
+            # Permitir solo una asistencia abierta por empleado y edificio
+            open_attendances = self.env['hr.attendance'].search([
+                ('employee_id', '=', attendance.employee_id.id),
+                ('building_id', '=', attendance.building_id.id),
+                ('check_out', '=', False),
+                ('id', '!=', attendance.id),
+            ], limit=1)
+            if open_attendances:
+                raise ValidationError(_(
+                    'No se puede crear una nuevo registro de asistencia para %(empl_name)s, el empleado no ha registrado su salida desde %(check_in)s en el edificio %(building)s',
+                    empl_name=attendance.employee_id.name,
+                    check_in=open_attendances.check_in,
+                    building=attendance.building_id.display_name
+                ))
+
+    def _compute_inconsistency_count(self):
+        for rec in self:
+            rec.attendance_inconsistency_count = self.env['hr.attendance.inconsistency'].search_count([
+                ('employee_id', '=', rec.employee_id.id),
+                ('check_in', '=', rec.check_in),
+                ('check_out', '=', rec.check_out),
+            ])
+
+    def _migrate_address_to_building(self):
+        """Método para migrar address_id a building_id"""
+        _logger = logging.getLogger(__name__)
+        count = 0
+        attendances = self.search([('building_id', '=', False), ('address_id', '!=', False)])
+        for att in attendances:
+            building = self.env['hr.zk.building'].search([('responsible_id', '=', att.address_id.id)], limit=1)
+            if building:
+                att.building_id = building.id
+                count += 1
+        _logger.info('Migración address_id -> building_id completada. Registros actualizados: %s', count)
+        return True
 
     @api.model
     def download_attendance(self):
@@ -93,7 +137,6 @@ class HrAttendance(models.Model):
                 # Validar si ya hay una entrada abierta en este edificio
                 existing_attendance = self.search([
                     ('employee_id', '=', employee.id),
-                    ('check_in', '<=', atten_time),
                     ('check_out', '=', False),
                     ('building_id', '=', machine.building_id.id)
                 ], limit=1)

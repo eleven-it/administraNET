@@ -6,6 +6,21 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='check_in']" position="after">
                 <field name="check_out"/>
+                <field name="building_id"/>
+            </xpath>
+        </field>
+    </record>
+    
+    <record id="view_hr_attendance_tree_fu" model="ir.ui.view">
+        <field name="name">hr.attendance.tree.fu</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="hr_attendance.view_attendance_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='employee_id']" position="after">
+                <field name="building_id"/>
+            </xpath>
+            <xpath expr="//field[@name='worked_hours']" position="after">
+                <field name="attendance_inconsistency_count"/>
             </xpath>
         </field>
     </record>

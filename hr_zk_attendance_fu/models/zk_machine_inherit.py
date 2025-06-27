@@ -2,7 +2,7 @@
 
 from odoo import models
 
-class ZkMachine(models.Model):
+class ZkMachineInherit(models.Model):
     _inherit = 'zk.machine'
 
     def action_download_attendance(self):
