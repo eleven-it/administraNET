@@ -1,6 +1,6 @@
 {
     "name": "HR ZK Attendance FU",
-    "version": "15.0.1.0.5",
+    "version": "15.0.1.0.6",
     "depends": ["hr_attendance"],
     "author": "Sebastián Paredes",
     "category": "Human Resources",
