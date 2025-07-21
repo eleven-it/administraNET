@@ -20,4 +20,18 @@
             </xpath>
         </field>
     </record>
+    <record id="zk_machine_tree_view_inherit_clean" model="ir.ui.view">
+        <field name="name">zk.machine.tree.inherit.clean</field>
+        <field name="model">zk.machine</field>
+        <field name="inherit_id" ref="hr_zk_attendance.view_zk_machine_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="before">
+                <button name="action_clean_attendance_data"
+                        string="Limpiar Asistencias y Fichadas"
+                        type="object"
+                        class="oe_highlight"
+                        groups="base.group_system"/>
+            </xpath>
+        </field>
+    </record>
 </odoo>

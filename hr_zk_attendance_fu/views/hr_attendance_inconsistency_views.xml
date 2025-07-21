@@ -8,6 +8,7 @@
                 <field name="check_in"/>
                 <field name="check_out"/>
                 <field name="motivo"/>
+                <field name="suggestion"/>
                 <field name="state"/>
                 <field name="machine_id"/>
                 <field name="building_id"/>
@@ -20,13 +21,14 @@
         <field name="name">hr.attendance.inconsistency.form</field>
         <field name="model">hr.attendance.inconsistency</field>
         <field name="arch" type="xml">
-            <form string="Attendance Inconsistency">
+            <form string="Attendance Inconsistency" edit="false" create="false">
                 <sheet>
                     <group>
                         <field name="employee_id"/>
                         <field name="check_in"/>
                         <field name="check_out"/>
                         <field name="motivo"/>
+                        <field name="suggestion"/>
                         <field name="state"/>
                         <field name="machine_id"/>
                         <field name="building_id"/>
@@ -34,10 +36,35 @@
                         <field name="write_date"/>
                     </group>
                     <footer>
-                        <button name="action_marcar_corregido" type="object" string="Mark as Resolved" attrs="{'invisible': [('state', '=', 'resolved')]}" class="btn-primary"/>
+                        <button name="action_marcar_corregido" type="object" string="Mark as Resolved" attrs="{'invisible': [('state', 'in', ['resolved','cancelled'])]}" class="btn-primary"/>
+                        <button name="action_marcar_cancelado" type="object" string="Cancelar por error de registración" attrs="{'invisible': [('state', 'in', ['resolved','cancelled'])]}" class="btn-secondary"/>
                     </footer>
                 </sheet>
             </form>
         </field>
+    </record>
+    <record id="view_hr_attendance_inconsistency_search" model="ir.ui.view">
+        <field name="name">hr.attendance.inconsistency.search</field>
+        <field name="model">hr.attendance.inconsistency</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Inconsistencias">
+                <filter name="pending" string="Pendientes" domain="[('state','=','pending')]" help="Mostrar solo inconsistencias pendientes"/>
+                <filter name="resolved" string="Resueltas" domain="[('state','=','resolved')]" help="Mostrar solo inconsistencias resueltas"/>
+                <filter name="cancelled" string="Canceladas" domain="[('state','=','cancelled')]" help="Mostrar solo inconsistencias canceladas"/>
+                <field name="employee_id"/>
+                <field name="building_id"/>
+                <field name="state"/>
+                <field name="check_in"/>
+                <field name="check_out"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_hr_attendance_inconsistency" model="ir.actions.act_window">
+        <field name="name">Inconsistencias de asistencia</field>
+        <field name="res_model">hr.attendance.inconsistency</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="hr_zk_attendance_fu.view_hr_attendance_inconsistency_search"/>
+        <field name="context">{'search_default_pending': 1}</field>
     </record>
 </odoo> 

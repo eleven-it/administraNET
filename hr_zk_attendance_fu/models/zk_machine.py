@@ -83,7 +83,7 @@ def download_attendance(self):
                     ('check_out', '=', False),
                     ('address_id', '=', self.address_id.id)
                 ], limit=1):
-                    hr_attendance_model.create({
+                    hr_attendance_model.with_context(from_download_attendance=True).create({
                         'employee_id': emp.id,
                         'check_in': time,
                         'address_id': self.address_id.id,

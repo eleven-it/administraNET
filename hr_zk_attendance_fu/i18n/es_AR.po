@@ -174,4 +174,145 @@ msgstr "El código del edificio debe ser único."
 
 #. module: hr_zk_attendance_fu
 msgid "El nombre del edificio debe ser único."
-msgstr "El nombre del edificio debe ser único." 
+msgstr "El nombre del edificio debe ser único."
+
+#. module: hr_zk_attendance_fu
+msgid "No active contract found for this employee at the attendance date."
+msgstr "No se encontró un contrato activo para este empleado en la fecha de la asistencia."
+
+#. module: hr_zk_attendance_fu
+msgid "Employee: %(empl)s, Building: %(building)s, Check-in: %(checkin)s. No active contract found for this employee at the attendance date. Please check the contract dates and ensure there is an active contract for this period."
+msgstr "Empleado: %(empl)s, Edificio: %(building)s, Entrada: %(checkin)s. No se encontró un contrato activo para este empleado en la fecha de la asistencia. Por favor, verifique las fechas del contrato y asegúrese de que haya un contrato activo para este período."
+
+#. module: hr_zk_attendance_fu
+msgid "There is already an open attendance for this employee in this building."
+msgstr "Ya existe una asistencia abierta para este empleado en este edificio."
+
+#. module: hr_zk_attendance_fu
+msgid "There is an overlapping attendance for this employee in this building."
+msgstr "Hay una asistencia superpuesta para este empleado en este edificio."
+
+#. module: hr_zk_attendance_fu
+msgid "Conflicting record:"
+msgstr "Registro en conflicto:"
+
+#. module: hr_zk_attendance_fu
+msgid "Check In:"
+msgstr "Entrada:"
+
+#. module: hr_zk_attendance_fu
+msgid "Check Out:"
+msgstr "Salida:"
+
+#. module: hr_zk_attendance_fu
+msgid "Building:"
+msgstr "Edificio:"
+
+#. module: hr_zk_attendance_fu
+msgid "Employee:"
+msgstr "Empleado:"
+
+#. module: hr_zk_attendance_fu
+msgid "Please adjust the times to avoid overlaps."
+msgstr "Por favor, ajuste los horarios para evitar solapamientos."
+
+#. module: hr_zk_attendance_fu
+msgid "The inconsistency was resolved and the attendance record was updated."
+msgstr "La inconsistencia fue resuelta y el registro de asistencia fue actualizado."
+
+#. module: hr_zk_attendance_fu
+msgid "The inconsistency was resolved and a new attendance record was created."
+msgstr "La inconsistencia fue resuelta y se creó un nuevo registro de asistencia."
+
+#. module: hr_zk_attendance_fu
+msgid "Attempted check-in with previous open attendance in the same building."
+msgstr "Intento de fichada de entrada con una asistencia abierta previa en el mismo edificio."
+
+#. module: hr_zk_attendance_fu
+msgid "Attempted check-in overlapping with another attendance in the same building."
+msgstr "Intento de fichada de entrada solapada con otra asistencia en el mismo edificio."
+
+#. module: hr_zk_attendance_fu
+msgid "Check-out time is earlier than check-in time."
+msgstr "La hora de salida es anterior a la hora de entrada."
+
+#. module: hr_zk_attendance_fu
+msgid "Mark as Resolved"
+msgstr "Marcar como resuelto"
+
+#. module: hr_zk_attendance_fu
+msgid "Pending"
+msgstr "Pendiente"
+
+#. module: hr_zk_attendance_fu
+msgid "Resolved"
+msgstr "Resuelto"
+
+#. module: hr_zk_attendance_fu
+msgid "Error while resolving inconsistency: %(error)s. Please review the attendance record and correct manually. Employee: %(empl)s, Building: %(building)s, Check-in: %(checkin)s, Check-out: %(checkout)s."
+msgstr "Error al resolver la inconsistencia: %(error)s. Por favor, revise el registro de asistencia y corrija manualmente. Empleado: %(empl)s, Edificio: %(building)s, Entrada: %(checkin)s, Salida: %(checkout)s." 
+
+#. module: hr_zk_attendance_fu
+msgid "No working schedule assigned: This employee does not have a working schedule (resource calendar) assigned, so worked hours and overtime cannot be calculated."
+msgstr "No tiene asignado un horario laboral: Este empleado no tiene un horario laboral (calendario de recursos) asignado, por lo que no se pueden calcular las horas trabajadas ni las extras."
+
+#. module: hr_zk_attendance_fu
+msgid "To resolve this, please assign a working schedule to the employee profile in the \"Working Schedule\" field. Without this, the system cannot calculate worked hours or overtime for this attendance.\n\nEmployee: %(empl)s\nBuilding: %(building)s\nCheck-in: %(checkin)s"
+msgstr "Para resolver esto, asigne un horario laboral al perfil del empleado en el campo \"Horario Laboral\". Sin esto, el sistema no puede calcular las horas trabajadas ni las extras para esta asistencia.\n\nEmpleado: %(empl)s\nEdificio: %(building)s\nEntrada: %(checkin)s" 
+
+#. module: hr_zk_attendance_fu
+#: model:ir.ui.menu,name:hr_zk_attendance_fu.menu_test_fu
+msgid "Test FU"
+msgstr "Prueba FU" 
+
+#. module: hr_zk_attendance_fu
+msgid "Cancelado"
+msgstr "Cancelado"
+
+#. module: hr_zk_attendance_fu
+msgid "Cancelar por error de registración"
+msgstr "Cancelar por error de registración"
+
+#. module: hr_zk_attendance_fu
+msgid "La inconsistencia fue cancelada por error de registración. No se realizará ninguna acción sobre las asistencias."
+msgstr "La inconsistencia fue cancelada por error de registración. No se realizará ninguna acción sobre las asistencias." 
+
+#. module: hr_zk_attendance_fu
+msgid "Exportar Horas Trabajadas"
+msgstr "Exportar Horas Trabajadas"
+
+#. module: hr_zk_attendance_fu
+msgid "Empleados"
+msgstr "Empleados"
+
+#. module: hr_zk_attendance_fu
+msgid "Desde"
+msgstr "Desde"
+
+#. module: hr_zk_attendance_fu
+msgid "Hasta"
+msgstr "Hasta"
+
+#. module: hr_zk_attendance_fu
+msgid "Edificio"
+msgstr "Edificio"
+
+#. module: hr_zk_attendance_fu
+msgid "Exportar a Excel"
+msgstr "Exportar a Excel"
+
+#. module: hr_zk_attendance_fu
+msgid "Cancelar"
+msgstr "Cancelar"
+
+#. module: hr_zk_attendance_fu
+msgid "Horas Trabajadas"
+msgstr "Horas Trabajadas"
+
+#. module: hr_zk_attendance_fu
+msgid "Empleado"
+msgstr "Empleado"
+
+#. module: hr_zk_attendance_fu
+msgid "Mes"
+msgstr "Mes" 

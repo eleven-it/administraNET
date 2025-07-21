@@ -1,0 +1,23 @@
+<!-- hr_zk_attendance_fu/views/zk_machine_inherit_views.xml -->
+<odoo>
+    <record id="zk_machine_form_inherit_fu" model="ir.ui.view">
+        <field name="name">zk.machine.form.inherit.fu</field>
+        <field name="model">zk.machine</field>
+        <field name="inherit_id" ref="hr_zk_attendance.view_zk_machine_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='address_id']" position="replace">
+                <field name="building_id" string="Edificio"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="zk_machine_tree_inherit_fu" model="ir.ui.view">
+        <field name="name">zk.machine.tree.inherit.fu</field>
+        <field name="model">zk.machine</field>
+        <field name="inherit_id" ref="hr_zk_attendance.view_zk_machine_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='address_id']" position="replace">
+                <field name="building_id" string="Edificio"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

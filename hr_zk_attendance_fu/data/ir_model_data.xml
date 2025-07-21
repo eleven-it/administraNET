@@ -13,4 +13,5 @@
         <field name="name">Attendance Inconsistency</field>
         <field name="model">hr.attendance.inconsistency</field>
     </record>
+    
 </odoo>

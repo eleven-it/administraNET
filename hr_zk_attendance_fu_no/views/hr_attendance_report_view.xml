@@ -1,0 +1,43 @@
+<odoo>
+    <!-- Vista de búsqueda personalizada para el reporte -->
+    <record id="view_hr_attendance_report_search" model="ir.ui.view">
+        <field name="name">hr.attendance.report.search</field>
+        <field name="model">hr.attendance</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Asistencias">
+                <field name="employee_id"/>
+                <field name="building_id"/>
+                <filter string="Hoy" name="today" domain="[('check_in','&gt;=',(context_today().strftime('%Y-%m-%d 00:00:00')))]"/>
+                <filter string="Este mes" name="this_month" domain="[('check_in','&gt;=',(context_today().replace(day=1).strftime('%Y-%m-%d 00:00:00')))]"/>
+                <filter string="Año actual" name="current_year" domain="[]"/>
+                <filter string="Empleado actual" name="my_employee" domain="[('employee_id','=',uid)]"/>
+                <group expand="0" string="Agrupar por...">
+                    <filter string="Empleado" name="group_employee" context="{'group_by':'employee_id'}"/>
+                    <filter string="Edificio" name="group_building" context="{'group_by':'building_id'}"/>
+                    <filter string="Mes" name="group_month" context="{'group_by':'check_in:month'}"/>
+                    <filter string="Día" name="group_day" context="{'group_by':'check_in:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_report_attendance_hours_by_employee" model="ir.actions.act_window">
+        <field name="name">Reporte de Horas por Empleado</field>
+        <field name="res_model">hr.attendance</field>
+        <field name="view_mode">pivot,tree,graph</field>
+        <field name="domain">[]</field>
+        <field name="context">{
+            'pivot_row_groupby': ['employee_id', 'building_id'],
+            'pivot_col_groupby': ['check_in:month'],
+            'pivot_measures': ['worked_hours']
+        }</field>
+        <field name="search_view_id" ref="hr_zk_attendance_fu.view_hr_attendance_report_search"/>
+    </record>
+
+    <menuitem
+        id="menu_hr_attendance_report_hours"
+        name="Horas por Empleado"
+        parent="hr_attendance.menu_hr_attendance_root"
+        action="action_report_attendance_hours_by_employee"
+    />
+</odoo>

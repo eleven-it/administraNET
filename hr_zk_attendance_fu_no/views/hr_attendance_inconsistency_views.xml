@@ -1,0 +1,43 @@
+<odoo>
+    <record id="view_hr_attendance_inconsistency_tree" model="ir.ui.view">
+        <field name="name">hr.attendance.inconsistency.tree</field>
+        <field name="model">hr.attendance.inconsistency</field>
+        <field name="arch" type="xml">
+            <tree string="Attendance Inconsistencies" decoration-danger="state == 'pending'">
+                <field name="employee_id"/>
+                <field name="check_in"/>
+                <field name="check_out"/>
+                <field name="motivo"/>
+                <field name="state"/>
+                <field name="machine_id"/>
+                <field name="building_id"/>
+                <field name="write_uid"/>
+                <field name="write_date"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_hr_attendance_inconsistency_form" model="ir.ui.view">
+        <field name="name">hr.attendance.inconsistency.form</field>
+        <field name="model">hr.attendance.inconsistency</field>
+        <field name="arch" type="xml">
+            <form string="Attendance Inconsistency">
+                <sheet>
+                    <group>
+                        <field name="employee_id"/>
+                        <field name="check_in"/>
+                        <field name="check_out"/>
+                        <field name="motivo"/>
+                        <field name="state"/>
+                        <field name="machine_id"/>
+                        <field name="building_id"/>
+                        <field name="write_uid"/>
+                        <field name="write_date"/>
+                    </group>
+                    <footer>
+                        <button name="action_marcar_corregido" type="object" string="Mark as Resolved" attrs="{'invisible': [('state', '=', 'resolved')]}" class="btn-primary"/>
+                    </footer>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo> 
