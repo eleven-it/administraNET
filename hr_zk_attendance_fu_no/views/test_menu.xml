@@ -1,4 +1,0 @@
-<odoo>
-    <!-- Menú de prueba para verificar que todo funciona -->
-    <menuitem id="menu_test_fu" name="Test FU" parent="hr_zk_attendance.zk_machine_menu" sequence="99"/>
-</odoo> 

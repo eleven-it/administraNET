@@ -1,4 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_hr_attendance_user,access_hr_attendance_user,model_hr_attendance,base.group_user,1,1,1,1
-access_hr_zk_building_user,access_hr_zk_building_user,hr_zk_attendance_fu.model_hr_zk_building,base.group_user,1,1,1,1
-access_hr_attendance_inconsistency_user,access_hr_attendance_inconsistency_user,hr_zk_attendance_fu.model_hr_attendance_inconsistency,base.group_user,1,1,1,1
